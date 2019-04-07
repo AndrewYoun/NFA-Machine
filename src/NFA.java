@@ -1,20 +1,52 @@
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Arrays;
+import java.util.Random;
+import java.util.ArrayList;
 
 public class NFA {
     private int numStates;
-    private HashMap<String, String> states;
+    private HashMap<String, ArrayList<String>> states;
     private String[] acceptingStates;
+    private String qStart;
 
-    public NFA() {
+    public NFA(String qStart) {
         this.numStates = getNumberOfStates();
-        this.createStates();
+        this.states = createStates();
         this.acceptingStates = createAcceptingStates();
+        this.qStart = qStart;
     }
 
-    public void validate(String s) {
-        // Finish this...
+    public boolean isValid(String input) {
+        try {
+            return isValid(qStart, input);
+        } catch (StackOverflowError e) {
+            return false;
+        }
+    }
+
+    public boolean isValid(String currentState, String s) {
+        if (s.length() == 0) {
+            if (Arrays.asList(this.acceptingStates).contains(currentState)) {
+               return true;
+            }
+            return false;
+        }
+        String alpha = s.substring(0, 1);
+        String focus = currentState + ", " + alpha;
+        try {
+            // Takes a shot in the dark, trys to
+            Random rand = new Random();
+            ArrayList<String> possibleStates = states.get(focus);
+            int i = rand.nextInt(possibleStates.size());
+            return isValid(possibleStates.get(i), s.substring(1));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public String getqStart() {
+        return qStart;
     }
 
     public int getNumStates() {
@@ -25,7 +57,7 @@ public class NFA {
         return this.acceptingStates;
     }
 
-    public HashMap<String, String> getStates() {
+    public HashMap<String, ArrayList<String>>  getStates() {
         return this.states;
     }
 
@@ -44,29 +76,35 @@ public class NFA {
     }
 
     // Creates a hashmap of the form ("old-state, tape-symbol": "new-state"}
-    private HashMap<String, String> createStates() {
-        HashMap<String, String> states = new HashMap<>();
+    private HashMap<String, ArrayList<String>>  createStates() {
+        HashMap<String, ArrayList<String>>  states = new HashMap<>();
         Scanner scanner = new Scanner(System.in);
-        System.out.println("\nEnter transitions in the form: (old-state, tape-symbol, new-state)");
-        System.out.println("Alphabet: {0, 1, -1}, where -1 represents ε\n");
+        System.out.println("\nAlphabet: {0, 1, -1}, where -1 represents ε.");
+        System.out.println("Type \"ok\" to stop entering transitions.\n");
 
-        // Ensures there is the correct number of states.
-        for (int i = 1; i <= this.numStates; i ++) {
-            // Checks if the input was a 3-tuple.
-            while (true) {
-                System.out.print("Enter a 3-tuple δ for (q" + i + "): ");
-                String[] temp = scanner.nextLine()
-                        .replace("(", "")
-                        .replace(")", "")
-                        .replace(" ", "")
-                        .replace("q", "")
-                        .split(",");
-                if (temp.length == 3 && isKosherInput(temp)) {
-                    states.put(temp[0] + ", " + temp[1], temp[2]);
-                    break;
-                }
-                System.out.println("Invalid input.");
+
+        // Checks if the input was a 3-tuple.
+        while (true) {
+            System.out.print("Enter a 3-tuple δ (q-old, symbol, q-new): ");
+            String input = scanner.nextLine();
+            if (input.equals("ok")) {
+                break;
             }
+            String[] temp = input
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace(" ", "")
+                    .replace("q", "")
+                    .split(",");
+            if (temp.length == 3 && isKosherInput(temp)) {
+                String focus = temp[0] + ", " + temp[1];
+                if (!states.containsKey(focus)) {
+                    states.put(focus, new ArrayList<String>());
+                }
+                    states.get(focus).add(temp[2]);
+            }
+            else
+                System.out.println("Invalid input.");
         }
         return states;
     }
@@ -97,31 +135,9 @@ public class NFA {
     private boolean isInteger(String s) {
         try {
             Integer.parseInt(s);
-        } catch(NumberFormatException e) {
+        } catch (NumberFormatException e) {
             return false;
         }
         return true;
-    }
-
-    // This method just displays the transitions neatly.
-    public String toString() {
-        String s = "";
-        for (String k : this.states.keySet()) {
-            String[] ks = k.split(", ");
-            String v = this.states.get(k);
-            if (Arrays.asList(this.acceptingStates).contains(ks[0])) {
-                s += "((q" + ks[0] + ")) --[";
-            } else {
-                s += " (q" + ks[0] + ")  --[";
-            }
-            s += ks[1] + "]--> ";
-            if (Arrays.asList(this.acceptingStates).contains(v)) {
-                s += "((q" + v + "))";
-            } else {
-                s += " (q" + v + ") ";
-            }
-            s += "\n";
-        }
-        return s;
     }
 }
