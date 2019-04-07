@@ -17,32 +17,24 @@ public class NFA {
         this.qStart = qStart;
     }
 
+    // Validates a string, taking a "shot in the dark" when
+    // it comes to an NFA with many of the same transitions.
     public boolean isValid(String input) {
-        try {
-            return isValid(qStart, input);
-        } catch (StackOverflowError e) {
-            return false;
-        }
-    }
-
-    public boolean isValid(String currentState, String s) {
-        if (s.length() == 0) {
-            if (Arrays.asList(this.acceptingStates).contains(currentState)) {
-               return true;
+        String current = qStart;
+        Random rand = new Random();
+        for (int i = 0; i < input.length(); i ++) {
+            String alpha = input.substring(i, i + 1);
+            String key = current + ", " + alpha;
+            ArrayList<String> possibleStates = states.get(key);
+            int x = rand.nextInt(possibleStates.size());
+            if (!states.containsKey(key)) {
+                return false;
             }
-            return false;
         }
-        String alpha = s.substring(0, 1);
-        String focus = currentState + ", " + alpha;
-        try {
-            // Takes a shot in the dark, trys to
-            Random rand = new Random();
-            ArrayList<String> possibleStates = states.get(focus);
-            int i = rand.nextInt(possibleStates.size());
-            return isValid(possibleStates.get(i), s.substring(1));
-        } catch (Exception e) {
-            return false;
+        if (Arrays.asList(this.acceptingStates).contains(current)) {
+            return true;
         }
+        return false;
     }
 
     public String getqStart() {
