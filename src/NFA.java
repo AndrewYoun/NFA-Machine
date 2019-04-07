@@ -1,17 +1,28 @@
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.Arrays;
 
 public class NFA {
     private int numStates;
     private HashMap<String, String> states;
+    private String[] acceptingStates;
 
     public NFA() {
         this.numStates = getNumberOfStates();
         this.createStates();
+        this.acceptingStates = createAcceptingStates();
+    }
+
+    public void validate(String s) {
+        // Finish this...
     }
 
     public int getNumStates() {
         return this.numStates;
+    }
+
+    public String[] getAcceptingStates() {
+        return this.acceptingStates;
     }
 
     public HashMap<String, String> getStates() {
@@ -32,35 +43,45 @@ public class NFA {
         }
     }
 
-    // Creates a hashmap of the form ((old-state, tape-symbol): new-state}
+    // Creates a hashmap of the form ("old-state, tape-symbol": "new-state"}
     private HashMap<String, String> createStates() {
         HashMap<String, String> states = new HashMap<>();
         Scanner scanner = new Scanner(System.in);
         System.out.println("\nEnter transitions in the form: (old-state, tape-symbol, new-state)");
         System.out.println("Alphabet: {0, 1, -1}, where -1 represents ε\n");
+
+        // Ensures there is the correct number of states.
         for (int i = 1; i <= this.numStates; i ++) {
+            // Checks if the input was a 3-tuple.
             while (true) {
-                System.out.print("Enter δ for (q" + i + "): ");
+                System.out.print("Enter a 3-tuple δ for (q" + i + "): ");
                 String[] temp = scanner.nextLine()
                         .replace("(", "")
                         .replace(")", "")
                         .replace(" ", "")
                         .replace("q", "")
                         .split(",");
-                if (temp.length == 3 && isKosherInput(temp))
+                if (temp.length == 3 && isKosherInput(temp)) {
+                    states.put(temp[0] + ", " + temp[1], temp[2]);
                     break;
+                }
                 System.out.println("Invalid input.");
             }
         }
         return states;
     }
 
-    private int[] createAcceptingState() {
+    // Prompts user for accepting states.
+    private String[] createAcceptingStates() {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("\nEnter a comma delimted list of accepting states.");
-        System.out.println("Alphabet: {0, 1, -1}, where -1 represents ε\n");
+        System.out.print("\nEnter a comma delimited list of accepting states: ");
+        String temp = scanner.nextLine();
+        return temp.replace("(", "")
+                .replace(")", "")
+                .replace(" ", "")
+                .replace("q", "")
+                .split(",");
     }
-}
 
 
     // Checks if the user entered integers.
@@ -82,11 +103,25 @@ public class NFA {
         return true;
     }
 
-    public void showNFATransitions() {
+    // This method just displays the transitions neatly.
+    public String toString() {
+        String s = "";
         for (String k : this.states.keySet()) {
+            String[] ks = k.split(", ");
             String v = this.states.get(k);
-            // come back to this...
-
+            if (Arrays.asList(this.acceptingStates).contains(ks[0])) {
+                s += "((q" + ks[0] + ")) --[";
+            } else {
+                s += " (q" + ks[0] + ")  --[";
+            }
+            s += ks[1] + "]--> ";
+            if (Arrays.asList(this.acceptingStates).contains(v)) {
+                s += "((q" + v + "))";
+            } else {
+                s += " (q" + v + ") ";
+            }
+            s += "\n";
         }
+        return s;
     }
 }
